@@ -96,6 +96,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
    # or
    pnpm dev
    ```
+**Note: If you have any adblocks running you may have to disable them for the website to load.**
 
 7. Open your browser and navigate to `http://localhost:8080`
 
@@ -106,6 +107,15 @@ npm run build
 # or
 yarn build
 # or
+pnpm build
+```
+
+## Previewing Production 
+```bash
+npm run preview
+# or 
+yarn preview
+# or 
 pnpm build
 ```
 
