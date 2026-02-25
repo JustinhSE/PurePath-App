@@ -9,6 +9,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { CustomBadge } from '@/components/ui/custom-badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { 
   Users, 
   Lock, 
@@ -21,8 +23,9 @@ import {
   Clock
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { db } from '../utils/firebase';
+import { db, adminUpdateUser, adminSuspendUser } from '../utils/firebase';
 import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { toast } from 'sonner';
 import { 
   BarChart, 
   Bar, 
@@ -96,6 +99,12 @@ const Admin: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [checkInTimes, setCheckInTimes] = useState<CheckInTime[]>([]);
+  const [editUser, setEditUser] = useState<User | null>(null);
+  const [editRole, setEditRole] = useState<string>('member');
+  const [editStreak, setEditStreak] = useState<number>(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [suspendUser, setSuspendUser] = useState<User | null>(null);
+  const [isSuspending, setIsSuspending] = useState(false);
   const isMobile = useIsMobile();
   
   useEffect(() => {
@@ -204,7 +213,48 @@ const Admin: React.FC = () => {
     
     return colors[day as keyof typeof colors] || '#a1a1aa';
   };
-  
+
+  const handleEditOpen = (user: User) => {
+    setEditUser(user);
+    setEditRole(user.role || 'member');
+    setEditStreak(user.streakDays || 0);
+  };
+
+  const handleEditSave = async () => {
+    if (!editUser) return;
+    setIsSaving(true);
+    const success = await adminUpdateUser(editUser.id, {
+      role: editRole as 'admin' | 'member',
+      streakDays: editStreak
+    });
+    if (success) {
+      setUsers(prev => prev.map(u =>
+        u.id === editUser.id ? { ...u, role: editRole, streakDays: editStreak } : u
+      ));
+      toast.success('User updated successfully');
+    } else {
+      toast.error('Failed to update user');
+    }
+    setIsSaving(false);
+    setEditUser(null);
+  };
+
+  const handleSuspendConfirm = async () => {
+    if (!suspendUser) return;
+    setIsSuspending(true);
+    const success = await adminSuspendUser(suspendUser.id);
+    if (success) {
+      setUsers(prev => prev.map(u =>
+        u.id === suspendUser.id ? { ...u, streakDays: 0, status: 'inactive' } : u
+      ));
+      toast.success('User suspended successfully');
+    } else {
+      toast.error('Failed to suspend user');
+    }
+    setIsSuspending(false);
+    setSuspendUser(null);
+  };
+
   return (
     <motion.div 
       className="container max-w-6xl py-8 pb-16"
@@ -324,8 +374,8 @@ const Admin: React.FC = () => {
                               <td className="py-3 px-4">{user.streakDays} days</td>
                               <td className="py-3 px-4">
                                 <div className="flex gap-2">
-                                  <Button variant="ghost" size="sm">Edit</Button>
-                                  <Button variant="ghost" size="sm" className="text-destructive">Suspend</Button>
+                                  <Button variant="ghost" size="sm" onClick={() => handleEditOpen(user)}>Edit</Button>
+                                  <Button variant="ghost" size="sm" className="text-destructive" onClick={() => setSuspendUser(user)}>Suspend</Button>
                                 </div>
                               </td>
                             </tr>
@@ -783,6 +833,66 @@ const Admin: React.FC = () => {
           </motion.div>
         </TabsContent>
       </Tabs>
+
+      {/* Edit User Dialog */}
+      <Dialog open={!!editUser} onOpenChange={(open) => { if (!open) setEditUser(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update the role or streak days for {editUser?.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="edit-role">Role</Label>
+              <Select value={editRole} onValueChange={setEditRole}>
+                <SelectTrigger id="edit-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="member">Member</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-streak">Streak Days</Label>
+              <Input
+                id="edit-streak"
+                type="number"
+                min={0}
+                value={editStreak}
+                onChange={e => setEditStreak(Number(e.target.value))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditUser(null)} disabled={isSaving}>Cancel</Button>
+            <Button onClick={handleEditSave} disabled={isSaving}>
+              {isSaving ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Suspend User Confirmation */}
+      <AlertDialog open={!!suspendUser} onOpenChange={(open) => { if (!open) setSuspendUser(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Suspend User</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will delete all entries (meditations, journal, relapses) and reset the streak for {suspendUser?.name}. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isSuspending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleSuspendConfirm} disabled={isSuspending} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              {isSuspending ? 'Suspending...' : 'Suspend'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   );
 };
