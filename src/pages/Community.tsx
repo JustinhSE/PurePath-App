@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -54,6 +55,7 @@ const Community: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageListenerRef = useRef<() => void>(() => {});
   const { currentUser, userProfile } = useAuth();
+  const [searchParams] = useSearchParams();
   
   // Initialize default chat rooms and fetch available rooms
   useEffect(() => {
@@ -64,12 +66,18 @@ const Community: React.FC = () => {
         const rooms = await getAvailableRooms(currentUser.uid, userProfile?.gender);
         setChatRooms(rooms);
         
-        // Select main chat by default
-        const mainRoom = rooms.find(room => room.id === 'main');
-        if (mainRoom) {
-          setSelectedRoom(mainRoom);
-        } else if (rooms.length > 0) {
-          setSelectedRoom(rooms[0]);
+        // Select room from query param, or main chat by default
+        const chatParam = searchParams.get('chat');
+        const targetRoom = chatParam ? rooms.find(room => room.id === chatParam) : null;
+        if (targetRoom) {
+          setSelectedRoom(targetRoom);
+        } else {
+          const mainRoom = rooms.find(room => room.id === 'main');
+          if (mainRoom) {
+            setSelectedRoom(mainRoom);
+          } else if (rooms.length > 0) {
+            setSelectedRoom(rooms[0]);
+          }
         }
         
         setLoading(false);
@@ -80,7 +88,7 @@ const Community: React.FC = () => {
     };
     
     setupChatRooms();
-  }, [currentUser, userProfile?.gender]);
+  }, [currentUser, userProfile?.gender, searchParams]);
   
   // Fetch users for displaying names and avatars
   useEffect(() => {

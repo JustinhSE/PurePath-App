@@ -34,6 +34,7 @@ export interface MeditationCardProps {
   breathInDuration?: number;
   holdDuration?: number;
   breathOutDuration?: number;
+  comingSoon?: boolean;
 }
 
 // Fallback audio URLs in case the provided ones don't work
@@ -55,6 +56,7 @@ const MeditationCard: React.FC<MeditationCardProps> = ({
   audioUrl,
   type = 'meditation',
   className,
+  comingSoon = false,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
@@ -280,7 +282,8 @@ const MeditationCard: React.FC<MeditationCardProps> = ({
   };
 
   return (
-    <Card className={cn("overflow-hidden transition-all duration-300 ease-apple hover:shadow-md", className)}>
+    <div className="relative">
+      <Card className={cn("overflow-hidden transition-all duration-300 ease-apple hover:shadow-md", className, comingSoon && "blur-sm pointer-events-none select-none")} aria-hidden={comingSoon || undefined}>
       {imageUrl && (
         <div className="h-48 overflow-hidden">
           <img
@@ -373,6 +376,14 @@ const MeditationCard: React.FC<MeditationCardProps> = ({
         </Button>
       </CardFooter>
     </Card>
+    {comingSoon && (
+      <div className="absolute inset-0 flex items-center justify-center z-10 rounded-lg" role="status" aria-label="Coming soon">
+        <Badge className="text-sm px-4 py-2 bg-background/90 border-2 shadow-lg">
+          🔒 Coming Soon
+        </Badge>
+      </div>
+    )}
+    </div>
   );
 };
 

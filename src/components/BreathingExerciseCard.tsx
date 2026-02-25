@@ -30,6 +30,7 @@ interface BreathingExerciseCardProps {
   breathInDuration?: number; // in seconds
   holdDuration?: number; // in seconds
   breathOutDuration?: number; // in seconds
+  comingSoon?: boolean;
 }
 
 // Fallback audio URLs
@@ -55,6 +56,7 @@ const BreathingExerciseCard: React.FC<BreathingExerciseCardProps> = ({
   breathInDuration = 4,
   holdDuration = 4,
   breathOutDuration = 6,
+  comingSoon = false,
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isFavorited, setIsFavorited] = useState(favorite);
@@ -326,7 +328,8 @@ const BreathingExerciseCard: React.FC<BreathingExerciseCardProps> = ({
   };
 
   return (
-    <Card className={cn("overflow-hidden transition-all duration-300 ease-apple hover:shadow-md", className)}>
+    <div className="relative">
+      <Card className={cn("overflow-hidden transition-all duration-300 ease-apple hover:shadow-md", className, comingSoon && "blur-sm pointer-events-none select-none")} aria-hidden={comingSoon || undefined}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
@@ -438,6 +441,14 @@ const BreathingExerciseCard: React.FC<BreathingExerciseCardProps> = ({
         </Button>
       </CardFooter>
     </Card>
+    {comingSoon && (
+      <div className="absolute inset-0 flex items-center justify-center z-10 rounded-lg" role="status" aria-label="Coming soon">
+        <Badge className="text-sm px-4 py-2 bg-background/90 border-2 shadow-lg">
+          🔒 Coming Soon
+        </Badge>
+      </div>
+    )}
+    </div>
   );
 };
 

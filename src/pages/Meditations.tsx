@@ -9,6 +9,10 @@ import { Search } from 'lucide-react';
 import { useAuth } from '@/utils/auth'; 
 import { db } from '@/utils/firebase'; 
 import { doc, getDoc } from 'firebase/firestore';
+import ambientAudio from '@/meditations/ambient.mp3';
+import calmWorkAudio from '@/meditations/calm-work.mp3';
+import pianoMeditationAudio from '@/meditations/piano-meditation.mp3';
+import relaxingBreathmusicAudio from '@/meditations/relaxing-breathmusic.mp3';
 
 // Enhanced meditation data with better audio sources
 const MEDITATIONS_DATA = [
@@ -22,7 +26,7 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'meditation',
         imageUrl: 'https://images.unsplash.com/photo-1505118380757-91f5f5632de0?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_1b1256f8c0.mp3',
+        audioUrl: pianoMeditationAudio,
         tags: ['urges', 'beginner', 'recovery']
     },
     {
@@ -34,7 +38,7 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'meditation',
         imageUrl: 'https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/01/14/audio_31743b0353.mp3',
+        audioUrl: calmWorkAudio,
         tags: ['morning', 'routine', 'focus']
     },
     {
@@ -46,7 +50,7 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'meditation',
         imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/05/16/audio_a4dc4156e5.mp3',
+        audioUrl: ambientAudio,
         tags: ['relaxation', 'stress', 'sleep']
     },
     {
@@ -58,7 +62,8 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'meditation',
         imageUrl: 'https://images.unsplash.com/photo-1519834556553-a080ee817e1f?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/01/20/audio_d16da7a9c7.mp3',
+        audioUrl: '',
+        comingSoon: true,
         tags: ['emotions', 'awareness', 'intermediate']
     },
     {
@@ -70,7 +75,8 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'meditation',
         imageUrl: 'https://images.unsplash.com/photo-1518002171953-8e4385a41802?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/08/04/audio_2dde898d0f.mp3',
+        audioUrl: '',
+        comingSoon: true,
         tags: ['compassion', 'kindness', 'healing']
     },
     {
@@ -82,7 +88,7 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'meditation',
         imageUrl: 'https://images.unsplash.com/photo-1566305977571-5666677c6e56?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_f93e793eb8.mp3',
+        audioUrl: relaxingBreathmusicAudio,
         tags: ['sleep', 'evening', 'relaxation']
     },
     {
@@ -94,7 +100,8 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'breathing',
         imageUrl: 'https://images.unsplash.com/photo-1586034679970-cb7b5fc4928a?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d1718beae7.mp3',
+        audioUrl: '',
+        comingSoon: true,
         tags: ['breathing', 'anxiety', 'stress-relief'],
         breathInDuration: 4,
         holdDuration: 4,
@@ -109,7 +116,8 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'breathing',
         imageUrl: 'https://images.unsplash.com/photo-1517898717281-8e4385a41802?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2021/04/07/audio_401b8d8d0b.mp3',
+        audioUrl: '',
+        comingSoon: true,
         tags: ['breathing', 'sleep', 'anxiety']
     },
     {
@@ -121,7 +129,8 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'prayer',
         imageUrl: 'https://images.unsplash.com/photo-1529070538774-1843cb3265df?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2021/10/10/audio_81b31aaeca.mp3',
+        audioUrl: '',
+        comingSoon: true,
         tags: ['prayer', 'serenity', 'acceptance']
     },
     {
@@ -133,7 +142,8 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'prayer',
         imageUrl: 'https://images.unsplash.com/photo-1475137979732-b349acb6b7e3?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/08/02/audio_884fe92c21.mp3',
+        audioUrl: '',
+        comingSoon: true,
         tags: ['prayer', 'strength', 'temptation']
     },
     {
@@ -145,7 +155,8 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'devotional',
         imageUrl: 'https://images.unsplash.com/photo-1504052434569-70ad5836ab65?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/08/03/audio_1b2fbeb6e6.mp3',
+        audioUrl: '',
+        comingSoon: true,
         tags: ['devotional', 'scripture', 'reflection']
     },
     {
@@ -157,7 +168,8 @@ const MEDITATIONS_DATA = [
         favorite: false,
         type: 'devotional',
         imageUrl: 'https://images.unsplash.com/photo-1493106641515-6b5631de4bb9?auto=format&fit=crop&q=80&w=500',
-        audioUrl: 'https://cdn.pixabay.com/download/audio/2022/02/07/audio_cca8a4d351.mp3',
+        audioUrl: '',
+        comingSoon: true,
         tags: ['devotional', 'reflection', 'spirituality']
     }
 ];
