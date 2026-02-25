@@ -38,6 +38,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { db } from "../utils/firebase";
 import { Trash2, User, Link as LinkIcon } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import SocialMediaLinks from "@/components/SocialMedia";
 import FriendsList from "@/components/FriendsList";
 import PartnerProgress from "@/components/PartnerProgress";
@@ -460,6 +461,8 @@ const Profile: React.FC = () => {
                       </Button>
                     </form>
                   </Form>
+
+                  <Separator className="my-6" />
 
                   <CardContent>
                     <CardTitle>Danger Zone</CardTitle>
