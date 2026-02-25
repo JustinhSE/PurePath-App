@@ -73,7 +73,7 @@ const FriendsList: React.FC = () => {
         const filteredUsernames = usernamesData.filter((user: any) => {
           return user.id !== auth.currentUser?.uid && 
                  !friends.some(friend => friend.id === user.id) &&
-                 !friendRequests.outgoing.includes(user.id);
+                 !friendRequests.outgoing.some((u: any) => u.id === user.id);
         });
         setAllUsernames(filteredUsernames);
       } catch (error) {
@@ -541,37 +541,33 @@ const FriendsList: React.FC = () => {
           <div className="mb-4">
             <h4 className="text-sm font-medium mb-2">Pending Requests</h4>
             <div className="space-y-2">
-              {friendRequests.outgoing.map((userId) => {
-                // Find the user details from allUsernames array
-                const user = allUsernames.find(u => u.id === userId);
-                return (
-                  <div key={userId} className="flex items-center justify-between p-2 border rounded bg-muted/10">
-                    <div className="flex items-center">
-                      <Avatar className="h-8 w-8 mr-2">
-                        <AvatarFallback>{user ? getInitials(user) : 'U'}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="flex items-center">
-                          <p className="font-medium">{user ? `${user.firstName} ${user.lastName}` : 'User'}</p>
-                          <span className="ml-2 px-1.5 py-0.5 text-xs bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 rounded">
-                            Pending
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{user ? `@${user.username}` : ''}</p>
+              {friendRequests.outgoing.map((outgoingUser) => (
+                <div key={outgoingUser.id} className="flex items-center justify-between p-2 border rounded bg-muted/10">
+                  <div className="flex items-center">
+                    <Avatar className="h-8 w-8 mr-2">
+                      <AvatarFallback>{getInitials(outgoingUser)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center">
+                        <p className="font-medium">{outgoingUser.firstName} {outgoingUser.lastName}</p>
+                        <span className="ml-2 px-1.5 py-0.5 text-xs bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 rounded">
+                          Pending
+                        </span>
                       </div>
+                      <p className="text-xs text-muted-foreground">@{outgoingUser.username}</p>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleCancelFriendRequest(userId)}
-                      title="Cancel request"
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
                   </div>
-                );
-              })}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleCancelFriendRequest(outgoingUser.id)}
+                    title="Cancel request"
+                    className="h-8 w-8 p-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
           </div>
         )}
