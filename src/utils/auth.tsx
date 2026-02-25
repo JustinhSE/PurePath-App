@@ -11,7 +11,7 @@ interface AuthContextType {
   firebaseInitialized: boolean;
   friendRequests: {
     incoming: UserProfile[];
-    outgoing: string[];
+    outgoing: UserProfile[];
   };
   friends: UserProfile[];
   accountabilityPartners: UserProfile[];
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [firebaseInitialized, setFirebaseInitialized] = useState(!!auth);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [friendRequests, setFriendRequests] = useState<{ incoming: UserProfile[], outgoing: string[] }>({
+  const [friendRequests, setFriendRequests] = useState<{ incoming: UserProfile[], outgoing: UserProfile[] }>({
     incoming: [],
     outgoing: []
   });
@@ -80,10 +80,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
           }
         }
+
+        const outgoingRequests: UserProfile[] = [];
+        if (profile.friendRequests?.outgoing?.length) {
+          for (const recipientId of profile.friendRequests.outgoing) {
+            const recipientProfile = await getUserProfile(recipientId);
+            if (recipientProfile) {
+              outgoingRequests.push(recipientProfile);
+            }
+          }
+        }
         
         setFriendRequests({
           incoming: incomingRequests,
-          outgoing: profile.friendRequests?.outgoing || []
+          outgoing: outgoingRequests
         });
         
         const friendsList: UserProfile[] = [];
