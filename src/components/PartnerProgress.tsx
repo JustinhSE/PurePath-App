@@ -30,7 +30,7 @@ import {
   Bar 
 } from 'recharts';
 import { useIsMobile } from "@/hooks/use-mobile";
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 
 const PartnerProgress: React.FC = () => {
   const { accountabilityPartners } = useAuth();
@@ -145,45 +145,69 @@ const PartnerProgress: React.FC = () => {
             {/* Partner details */}
             {partner && (
               <div className="p-4 border rounded-md bg-muted/10">
-                <div className="flex items-center mb-4">
-                  <Avatar className="h-12 w-12 mr-3">
-                    <AvatarFallback className="text-lg">
-                      {getInitials(partner)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-medium">{partner.firstName} {partner.lastName}</h3>
-                    <p className="text-sm text-muted-foreground">{partner.email}</p>
-                  </div>
-                </div>
-                
-                {partnerData && (
-                  <>
-                    <div className="grid grid-cols-2 gap-2 mb-4">
-                      <div className="p-2 bg-secondary/50 rounded-md text-center">
-                        <p className="text-sm text-muted-foreground">Clean Days</p>
-                        <p className="text-xl font-bold">{partnerData.cleanDays}</p>
+                {(() => {
+                  const lastActive = partner.lastCheckIn?.toDate?.();
+                  const daysInactive = lastActive ? differenceInDays(new Date(), lastActive) : null;
+                  const isInactive = daysInactive !== null && daysInactive >= 7;
+                  const lastActiveFormatted = lastActive ? format(lastActive, 'MMM d, yyyy') : null;
+                  return (
+                    <>
+                      <div className="flex items-center mb-4">
+                        <Avatar className="h-12 w-12 mr-3">
+                          <AvatarFallback className="text-lg">
+                            {getInitials(partner)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-medium">{partner.firstName} {partner.lastName}</h3>
+                          <p className="text-sm text-muted-foreground">@{partner.username}</p>
+                          {isInactive && lastActiveFormatted && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Last active: {lastActiveFormatted}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className="p-2 bg-secondary/50 rounded-md text-center">
-                        <p className="text-sm text-muted-foreground">Current Streak</p>
-                        <p className="text-xl font-bold">{partnerData.streakData[partnerData.streakData.length - 1]?.streak || 0}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="p-2 bg-secondary/50 rounded-md text-center">
-                        <p className="text-sm text-muted-foreground">Longest Streak</p>
-                        <p className="text-xl font-bold">{partnerData.longestStreak}</p>
-                      </div>
-                      <div className="p-2 bg-secondary/50 rounded-md text-center">
-                        <p className="text-sm text-muted-foreground">Net Growth</p>
-                        <p className={`text-xl font-bold ${partnerData.netGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                          {partnerData.netGrowth}
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
+                      
+                      {partnerData && (
+                        <>
+                          <div className="grid grid-cols-2 gap-2 mb-4">
+                            <div className="p-2 bg-secondary/50 rounded-md text-center">
+                              <p className="text-sm text-muted-foreground">Clean Days</p>
+                              <p className="text-xl font-bold">{partnerData.cleanDays}</p>
+                            </div>
+                            <div className="p-2 bg-secondary/50 rounded-md text-center">
+                              {isInactive && lastActiveFormatted ? (
+                                <>
+                                  <p className="text-sm text-muted-foreground">Last Active</p>
+                                  <p className="text-sm font-bold">{lastActiveFormatted}</p>
+                                </>
+                              ) : (
+                                <>
+                                  <p className="text-sm text-muted-foreground">Current Streak</p>
+                                  <p className="text-xl font-bold">{partnerData.streakData[partnerData.streakData.length - 1]?.streak || 0}</p>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-2">
+                            <div className="p-2 bg-secondary/50 rounded-md text-center">
+                              <p className="text-sm text-muted-foreground">Longest Streak</p>
+                              <p className="text-xl font-bold">{partnerData.longestStreak}</p>
+                            </div>
+                            <div className="p-2 bg-secondary/50 rounded-md text-center">
+                              <p className="text-sm text-muted-foreground">Net Growth</p>
+                              <p className={`text-xl font-bold ${partnerData.netGrowth >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                                {partnerData.netGrowth}
+                              </p>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             )}
             
