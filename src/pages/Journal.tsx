@@ -138,7 +138,7 @@ const Journal: React.FC = () => {
       });
 
       toast.success("Journal entry saved!");
-      navigate('/dashboard');
+      navigate('/journal/entries');
     } catch (error) {
       console.error("Error saving journal entry:", error);
       toast.error("Failed to save journal entry");
