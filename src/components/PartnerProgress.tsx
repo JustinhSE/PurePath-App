@@ -193,8 +193,8 @@ const PartnerProgress: React.FC = () => {
                           
                           <div className="grid grid-cols-2 gap-2">
                             <div className="p-2 bg-secondary/50 rounded-md text-center">
-                              <p className="text-sm text-muted-foreground">Longest Streak</p>
-                              <p className="text-xl font-bold">{partnerData.longestStreak}</p>
+                              <p className="text-sm text-muted-foreground">Days Relapsed</p>
+                              <p className="text-xl font-bold">{partnerData.relapseDays}</p>
                             </div>
                             <div className="p-2 bg-secondary/50 rounded-md text-center">
                               <p className="text-sm text-muted-foreground">Net Growth</p>
