@@ -1236,4 +1236,45 @@ export const getAllUsernames = async (): Promise<UserProfile[]> => {
   }
 };
 
+export const updateCalendarDay = async (
+  userId: string,
+  date: Date,
+  markAsRelapse: boolean,
+  triggers?: string,
+  notes?: string
+): Promise<boolean> => {
+  try {
+    const userDocRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userDocRef);
+
+    if (!userDoc.exists()) return false;
+
+    const userData = userDoc.data();
+    const relapses: Relapse[] = userData.relapses || [];
+    const targetDay = startOfDay(date);
+
+    // Remove any existing relapse entry for this day
+    const filtered = relapses.filter(
+      r => !isSameDay(startOfDay(r.timestamp.toDate()), targetDay)
+    );
+
+    if (markAsRelapse) {
+      // Add a new relapse entry for this day at noon to avoid timezone edge cases
+      const relapseDate = new Date(targetDay);
+      relapseDate.setHours(12, 0, 0, 0);
+      filtered.push({
+        timestamp: Timestamp.fromDate(relapseDate),
+        triggers: triggers || '',
+        notes: notes || ''
+      });
+    }
+
+    await updateDoc(userDocRef, { relapses: filtered });
+    return true;
+  } catch (error) {
+    console.error('Error updating calendar day:', error);
+    return false;
+  }
+};
+
 export default app;
