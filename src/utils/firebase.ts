@@ -1177,7 +1177,7 @@ export const markNotificationAsRead = async (userId: string, notificationId: str
   }
 };
 
-export const notifyAccountabilityPartners = async (userId: string, type: 'achievement' | 'emergency', message: string) => {
+export const notifyAccountabilityPartners = async (userId: string, type: 'achievement' | 'emergency', message: string, partnerIds?: string[]) => {
   try {
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
@@ -1185,7 +1185,8 @@ export const notifyAccountabilityPartners = async (userId: string, type: 'achiev
     if (userDoc.exists()) {
       const userData = userDoc.data();
       const userName = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Your friend';
-      const partners = userData.accountabilityPartners || [];
+      const allPartners: string[] = userData.accountabilityPartners || [];
+      const partners = partnerIds ? allPartners.filter((id: string) => partnerIds.includes(id)) : allPartners;
       
       for (const partnerId of partners) {
         const partnerRef = doc(db, 'users', partnerId);
@@ -1273,6 +1274,10 @@ export const updateCalendarDay = async (
     return true;
   } catch (error) {
     console.error('Error updating calendar day:', error);
+    return false;
+  }
+};
+
 export const adminUpdateUser = async (userId: string, updates: { role?: 'admin' | 'member'; streakDays?: number }): Promise<boolean> => {
   try {
     const userRef = doc(db, 'users', userId);
