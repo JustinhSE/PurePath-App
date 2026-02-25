@@ -1273,6 +1273,10 @@ export const updateCalendarDay = async (
     return true;
   } catch (error) {
     console.error('Error updating calendar day:', error);
+    return false;
+  }
+};
+
 export const adminUpdateUser = async (userId: string, updates: { role?: 'admin' | 'member'; streakDays?: number }): Promise<boolean> => {
   try {
     const userRef = doc(db, 'users', userId);
