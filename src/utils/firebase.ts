@@ -1236,4 +1236,33 @@ export const getAllUsernames = async (): Promise<UserProfile[]> => {
   }
 };
 
+export const adminUpdateUser = async (userId: string, updates: { role?: 'admin' | 'member'; streakDays?: number }): Promise<boolean> => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, updates);
+    return true;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    return false;
+  }
+};
+
+export const adminSuspendUser = async (userId: string): Promise<boolean> => {
+  try {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      meditations: [],
+      journal: [],
+      relapses: [],
+      streakDays: 0,
+      streakStartDate: Timestamp.now(),
+      lastCheckIn: null
+    });
+    return true;
+  } catch (error) {
+    console.error('Error suspending user:', error);
+    return false;
+  }
+};
+
 export default app;
