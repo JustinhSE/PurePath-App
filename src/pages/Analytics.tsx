@@ -306,7 +306,7 @@ const Analytics: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <RelapseCalendar userId={currentUser?.uid} />
+                  <RelapseCalendar userId={currentUser?.uid} editable={true} />
 
                   <div className="grid grid-cols-3 gap-4 mt-6">
                     <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg text-center">

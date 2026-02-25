@@ -1,16 +1,29 @@
 
 import React, { useState, useEffect } from 'react';
 import { Calendar } from '@/components/ui/calendar';
-import { getRelapseCalendarData, getRelapseData } from '../utils/firebase';
+import { getRelapseCalendarData, getRelapseData, updateCalendarDay } from '../utils/firebase';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Card } from '@/components/ui/card';
 import { isSameDay, differenceInDays } from 'date-fns';
 import { motion } from 'framer-motion';
 import { DayContentProps } from 'react-day-picker';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { toast } from 'sonner';
 
 interface RelapseCalendarProps {
   userId?: string;
   showStats?: boolean;
+  editable?: boolean;
 }
 
 interface DayInfo {
@@ -22,41 +35,86 @@ interface DayInfo {
   } | null;
 }
 
-const RelapseCalendar: React.FC<RelapseCalendarProps> = ({ userId, showStats = false }) => {
+const RelapseCalendar: React.FC<RelapseCalendarProps> = ({ userId, showStats = false, editable = false }) => {
   const [calendarData, setCalendarData] = useState<DayInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [month, setMonth] = useState<Date>(new Date());
   const [stats, setStats] = useState({ cleanDays: 0, relapseDays: 0, netGrowth: 0 });
 
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [selectedDayData, setSelectedDayData] = useState<DayInfo | null>(null);
+  const [editMarkAsRelapse, setEditMarkAsRelapse] = useState(false);
+  const [editTriggers, setEditTriggers] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fetchData = async () => {
+    if (!userId) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      // Get calendar visualization data
+      const data = await getRelapseCalendarData(userId);
+      setCalendarData(data);
+      
+      // Get analytics data for accurate stats
+      const relapseData = await getRelapseData(userId, 'all');
+      setStats({
+        cleanDays: relapseData.cleanDays,
+        relapseDays: relapseData.relapseDays,
+        netGrowth: relapseData.netGrowth
+      });
+    } catch (error) {
+      console.error('Error fetching calendar data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!userId) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        // Get calendar visualization data
-        const data = await getRelapseCalendarData(userId);
-        setCalendarData(data);
-        
-        // Get analytics data for accurate stats
-        const relapseData = await getRelapseData(userId, 'all');
-        setStats({
-          cleanDays: relapseData.cleanDays,
-          relapseDays: relapseData.relapseDays,
-          netGrowth: relapseData.netGrowth
-        });
-      } catch (error) {
-        console.error('Error fetching calendar data:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchData();
   }, [userId]);
+
+  const handleDayClick = (day: Date) => {
+    if (!editable || !userId) return;
+    const dayData = calendarData.find(d => isSameDay(d.date, day)) || null;
+    setSelectedDay(day);
+    setSelectedDayData(dayData);
+    setEditMarkAsRelapse(dayData?.hadRelapse ?? false);
+    setEditTriggers(dayData?.relapseInfo?.triggers ?? '');
+    setEditNotes(dayData?.relapseInfo?.notes ?? '');
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!userId || !selectedDay) return;
+    setIsSaving(true);
+    try {
+      const success = await updateCalendarDay(
+        userId,
+        selectedDay,
+        editMarkAsRelapse,
+        editMarkAsRelapse ? editTriggers : undefined,
+        editMarkAsRelapse ? editNotes : undefined
+      );
+      if (success) {
+        toast.success(editMarkAsRelapse ? 'Day marked as relapse' : 'Day marked as clean');
+        setEditDialogOpen(false);
+        await fetchData();
+      } else {
+        toast.error('Failed to update day');
+      }
+    } catch (error) {
+      toast.error('Failed to update day');
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // Custom day rendering with dots for relapse status
   const renderDay = (props: DayContentProps) => {
@@ -72,7 +130,10 @@ const RelapseCalendar: React.FC<RelapseCalendarProps> = ({ userId, showStats = f
     return (
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="relative w-full h-full flex items-center justify-center">
+          <div
+            className={`relative w-full h-full flex items-center justify-center ${editable ? 'cursor-pointer' : ''}`}
+            onClick={editable ? () => handleDayClick(day) : undefined}
+          >
             <div className="w-7 h-7 flex items-center justify-center">
               {day.getDate()}
             </div>
@@ -93,6 +154,7 @@ const RelapseCalendar: React.FC<RelapseCalendarProps> = ({ userId, showStats = f
             ) : (
               <p className="text-green-500">Clean day</p>
             )}
+            {editable && <p className="text-xs text-muted-foreground mt-1">Click to edit</p>}
           </div>
         </TooltipContent>
       </Tooltip>
@@ -120,6 +182,9 @@ const RelapseCalendar: React.FC<RelapseCalendarProps> = ({ userId, showStats = f
           </div>
         ) : (
           <Card className="p-4 w-full">
+            {editable && (
+              <p className="text-xs text-muted-foreground mb-2 text-center">Click any day to mark it as clean or relapse</p>
+            )}
             <Calendar 
               mode="default"
               month={month}
@@ -155,6 +220,63 @@ const RelapseCalendar: React.FC<RelapseCalendarProps> = ({ userId, showStats = f
             </div>
           </Card>
         )}
+
+        {/* Edit day dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                Edit Day – {selectedDay ? new Intl.DateTimeFormat('en-US', { month: 'long', day: 'numeric', year: 'numeric' }).format(selectedDay) : ''}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="flex gap-3">
+                <Button
+                  variant={editMarkAsRelapse ? 'outline' : 'default'}
+                  className={!editMarkAsRelapse ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
+                  onClick={() => setEditMarkAsRelapse(false)}
+                >
+                  Clean Day
+                </Button>
+                <Button
+                  variant={editMarkAsRelapse ? 'destructive' : 'outline'}
+                  onClick={() => setEditMarkAsRelapse(true)}
+                >
+                  Relapse Day
+                </Button>
+              </div>
+
+              {editMarkAsRelapse && (
+                <>
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-triggers">Triggers</Label>
+                    <Input
+                      id="edit-triggers"
+                      placeholder="What triggered this?"
+                      value={editTriggers}
+                      onChange={e => setEditTriggers(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-notes">Notes (optional)</Label>
+                    <Textarea
+                      id="edit-notes"
+                      placeholder="Any additional notes..."
+                      value={editNotes}
+                      onChange={e => setEditNotes(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleSaveEdit} disabled={isSaving}>
+                {isSaving ? 'Saving...' : 'Save'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </TooltipProvider>
   );
